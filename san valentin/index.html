@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>San Valentín</title>
+
+<style>
+body{
+  margin:0;
+  overflow:hidden;
+  height:100vh;
+  background:linear-gradient(to top,#87ceeb,#dff6ff);
+  position:relative;
+  font-family:Arial;
+  transition:background 2s ease;
+}
+
+/* Fondo oscuro final */
+body.dark{
+  background:linear-gradient(to top,#0f2027,#203a43,#2c5364);
+}
+
+/* Colina */
+.hill{
+  position:absolute;
+  bottom:-100px;
+  width:120%;
+  height:300px;
+  background:#3cb371;
+  border-radius:50%;
+  left:-10%;
+}
+
+/* Planta */
+.plant{
+  position:absolute;
+  bottom:170px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:70px;
+  filter:grayscale(1) brightness(0.6);
+  transition:all 2s ease;
+}
+
+.plant.alive{
+  filter:grayscale(0) brightness(1.2);
+  transform:translateX(-50%) scale(1.1);
+}
+
+/* Capullo */
+.bud{
+  position:absolute;
+  bottom:240px;
+  left:50%;
+  transform:translateX(-50%) scale(0);
+  font-size:60px;
+  transition:all 2s ease;
+}
+
+.bud.show{
+  transform:translateX(-50%) scale(1);
+  filter:drop-shadow(0 0 10px red);
+}
+
+/* Flor */
+.flower{
+  position:absolute;
+  bottom:240px;
+  left:50%;
+  transform:translateX(-50%) scale(0);
+  font-size:80px;
+  transition:all 2s ease;
+}
+
+.flower.bloom{
+  transform:translateX(-50%) scale(1);
+}
+
+/* Mensaje final */
+.message{
+  position:absolute;
+  top:40%;
+  width:100%;
+  text-align:center;
+  font-size:50px;
+  color:white;
+  opacity:0;
+  transition:opacity 2s ease;
+  text-shadow:0 0 20px pink;
+}
+
+.message.show{
+  opacity:1;
+}
+
+/* Nubes */
+.cloud{
+  position:absolute;
+  background:white;
+  width:120px;
+  height:60px;
+  border-radius:50px;
+}
+
+.cloud::before,
+.cloud::after{
+  content:"";
+  position:absolute;
+  background:white;
+  border-radius:50%;
+}
+
+.cloud::before{
+  width:60px;
+  height:60px;
+  top:-30px;
+  left:20px;
+}
+
+.cloud::after{
+  width:80px;
+  height:80px;
+  top:-40px;
+  left:50px;
+}
+
+.draggable{
+  cursor:grab;
+}
+
+/* Lluvia */
+.rain{
+  position:absolute;
+  width:3px;
+  height:15px;
+  background:#00aaff;
+  animation:fall 0.8s linear forwards;
+}
+
+@keyframes fall{
+  from{ transform:translateY(0); opacity:1;}
+  to{ transform:translateY(250px); opacity:0;}
+}
+
+/* Fuegos artificiales */
+.firework{
+  position:absolute;
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  animation:explode 1s ease-out forwards;
+}
+
+@keyframes explode{
+  from{ transform:scale(0); opacity:1;}
+  to{ transform:scale(15); opacity:0;}
+}
+</style>
+</head>
+
+<body>
+
+<div class="hill"></div>
+
+<div id="plant" class="plant">🥀</div>
+<div id="bud" class="bud">🔴</div>
+<div id="flower" class="flower">🌺</div>
+
+<div id="message" class="message">
+Feliz San Valentín ❤️<br>Te quiero
+</div>
+
+<div id="dragCloud" class="cloud draggable" style="top:120px; left:700px;"></div>
+
+<script>
+const cloud = document.getElementById("dragCloud");
+const plant = document.getElementById("plant");
+const bud = document.getElementById("bud");
+const flower = document.getElementById("flower");
+const message = document.getElementById("message");
+
+let isDragging = false;
+let revived = false;
+let finished = false;
+
+cloud.addEventListener("mousedown", ()=>{
+  isDragging = true;
+  cloud.style.cursor = "grabbing";
+});
+
+document.addEventListener("mouseup", ()=>{
+  isDragging = false;
+  cloud.style.cursor = "grab";
+});
+
+document.addEventListener("mousemove", (e)=>{
+  if(isDragging){
+    cloud.style.left = e.pageX - 60 + "px";
+    cloud.style.top = e.pageY - 30 + "px";
+    rain();
+    checkPlant();
+    checkFinal();
+  }
+});
+
+function rain(){
+  let drop = document.createElement("div");
+  drop.className="rain";
+  drop.style.left = (cloud.offsetLeft + Math.random()*120)+"px";
+  drop.style.top = (cloud.offsetTop + 60)+"px";
+  document.body.appendChild(drop);
+  setTimeout(()=>{ drop.remove(); },800);
+}
+
+function checkPlant(){
+  const cloudRect = cloud.getBoundingClientRect();
+  const plantRect = plant.getBoundingClientRect();
+
+  if(
+    cloudRect.left < plantRect.right &&
+    cloudRect.right > plantRect.left &&
+    cloudRect.bottom > plantRect.top &&
+    !revived
+  ){
+    revived = true;
+
+    plant.textContent = "🌿";
+    plant.classList.add("alive");
+
+    setTimeout(()=>{
+      bud.classList.add("show");
+    },1000);
+
+    setTimeout(()=>{
+      bud.style.transform="translateX(-50%) scale(0)";
+      flower.classList.add("bloom");
+    },3000);
+  }
+}
+
+function checkFinal(){
+  const cloudRect = cloud.getBoundingClientRect();
+  const flowerRect = flower.getBoundingClientRect();
+
+  if(
+    flower.classList.contains("bloom") &&
+    cloudRect.left < flowerRect.right &&
+    cloudRect.right > flowerRect.left &&
+    cloudRect.bottom > flowerRect.top &&
+    !finished
+  ){
+    finished = true;
+
+    document.body.classList.add("dark");
+    message.classList.add("show");
+    launchFireworks(); 
+
+ let music = document.getElementById("music");
+music.volume = 0.7;
+music.play();
+
+  }
+}
+
+function launchFireworks(){
+  setInterval(()=>{
+    let fw = document.createElement("div");
+    fw.className="firework";
+    fw.style.left = Math.random()*window.innerWidth + "px";
+    fw.style.top = Math.random()*window.innerHeight/2 + "px";
+    fw.style.background = "hsl(" + Math.random()*360 + ",100%,60%)";
+    document.body.appendChild(fw);
+    setTimeout(()=>{ fw.remove(); },1000);
+  },500);
+}
+</script>
+
+<audio id="music">
+  <source src="musica.mp3" type="audio/mpeg">
+</audio>
+
+</body>
+</html>
